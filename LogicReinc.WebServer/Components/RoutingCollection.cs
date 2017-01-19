@@ -22,6 +22,7 @@ namespace LogicReinc.WebServer.Components
         private Dictionary<string, Action<HttpRequest>> Routings { get; } = new Dictionary<string, Action<HttpRequest>>();
         private Dictionary<string, ControllerDescriptor> Controllers { get; } = new Dictionary<string, ControllerDescriptor>();
         private Dictionary<Func<HttpRequest, bool>, Action<HttpRequest>> ConditionalRouting { get; } = new Dictionary<Func<HttpRequest, bool>, Action<HttpRequest>>();
+        private Dictionary<Func<HttpRequest, bool>, HttpServer> ConditionalPassthroughs { get; } = new Dictionary<Func<HttpRequest, bool>, HttpServer>();
 
         public List<ControllerRoute> GetControllers() => Controllers.Select(x => new ControllerRoute(x.Key, x.Value)).ToList();
 
@@ -48,12 +49,20 @@ namespace LogicReinc.WebServer.Components
         {
             ConditionalRouting.Add(condition, action);
         }
-        
+
+        public void AddPassthrough(Func<HttpRequest, bool> condition, HttpServer server)
+        {
+            ConditionalPassthroughs.Add(condition, server);
+        }
+
+
         public void Clear()
         {
+            Files.Clear();
             Routings.Clear();
             Controllers.Clear();
             ConditionalRouting.Clear();
+            ConditionalPassthroughs.Clear();
         }
 
 
@@ -79,6 +88,16 @@ namespace LogicReinc.WebServer.Components
                 request.Close();
             }
             return found;
+        }
+        public bool ExecuteConditionalPassthroughs(HttpRequest request)
+        {
+            foreach (var conditional in ConditionalPassthroughs)
+                if (conditional.Key(request))
+                {
+                    conditional.Value.HandleRequest(request);
+                    return true;
+                }
+            return false;
         }
         public bool ExecuteConditional(HttpRequest request)
         {

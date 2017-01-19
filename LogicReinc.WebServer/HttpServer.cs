@@ -140,6 +140,12 @@ namespace LogicReinc.WebServer
         {
             Routing.AddRoute(condition, action);
         }
+
+        //Route: Passthrough
+        public void AddPassthrough(Func<HttpRequest,bool> condition, HttpServer server)
+        {
+            Routing.AddPassthrough(condition, server);
+        }
         
         public void AddServer(string[] bindings, HttpServer server)
         {
@@ -214,9 +220,16 @@ namespace LogicReinc.WebServer
         {
             try
             {
+                if (req.Server != this)
+                    req.Server = this;
+
                 Log("HandleRequest", $"{req.RemoteAddress}->{req.Url.Path}");
                 using (HttpRequest request = req)
                 {
+
+                    if (Routing.ExecuteConditionalPassthroughs(request))
+                        return;
+
                     //On each request
                     if (OnRequest != null)
                         OnRequest(request);
