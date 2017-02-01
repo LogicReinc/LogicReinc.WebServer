@@ -161,6 +161,8 @@ namespace LogicReinc.WebServer.Components
                             if (UseWrap && responseType != BodyType.Raw && responseType != BodyType.Razor)
                                 result = new APIWrap(result);
 
+                            if (!Server?.IsAllowedResponse(responseType) ?? false)
+                                throw new Exceptions.ConfigurationException("Requested response type is not allowed");
                             switch (responseType)
                             {
                                 case BodyType.Razor:
@@ -189,7 +191,10 @@ namespace LogicReinc.WebServer.Components
                                     request.Write(XmlParser.Serialize(result));
                                     break;
                                 case BodyType.UrlEncoded:
-                                    throw new NotImplementedException();
+                                    throw new NotSupportedException();
+                                case BodyType.MultipartStream:
+                                    throw new NotSupportedException();
+
                             }
                         }
                     }
@@ -242,7 +247,7 @@ namespace LogicReinc.WebServer.Components
             controller.Init(Server, request);
             return controller;
         }
-
+        
         private object[] GetParameters(CallDescriptor call, HttpRequest request)
         {
             List<object> paras = new List<object>();
@@ -278,6 +283,9 @@ namespace LogicReinc.WebServer.Components
                                 break;
                             case "application/x-www-form-urlencoded":
                                 bType = BodyType.UrlEncoded;
+                                break;
+                            case "multipart/form-data":
+                                bType = BodyType.MultipartStream;
                                 break;
                         }
                     }

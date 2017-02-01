@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -41,6 +42,8 @@ namespace LogicReinc.WebServer
         public void Write(string data) => Request.Write(data);
         public void Write(byte[] data) => Request.Write(data);
         public void Write(object data, BodyType type = BodyType.JSON) => Request.Write(data, type);
+
+        public void Stream(Stream stream) => Request.Stream(stream);
 
         public void Redirect(string newUrl) => Request.Redirect(newUrl);
         public void ThrowCode(int code) => Request.ThrowCode(code);

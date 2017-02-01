@@ -71,6 +71,7 @@
     <Compile Include="Attributes\SyncControllerAttribute.cs" />
     <Compile Include="Attributes\IgnoreSyncAttribute.cs" />
     <Compile Include="Components\FileCache.cs" />
+    <Compile Include="Components\Multipart.cs" />
     <Compile Include="Components\ParameterConverter.cs" />
     <Compile Include="ControllerBase.cs" />
     <Compile Include="Controllers\SecurityController.cs" />

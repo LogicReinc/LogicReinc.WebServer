@@ -119,7 +119,11 @@ namespace LogicReinc.WebServer
         }
         #endregion
         
+        //Properties (Utility)
+        public bool AcceptRange => GetHeader("Accept-Ranges") == "bytes";
 
+
+        //Constructor
         public HttpRequest(HttpListenerContext context)
         {
             Context = context;
@@ -127,6 +131,7 @@ namespace LogicReinc.WebServer
         }
 
 
+        //Utility
         public string GetHeader(string header)
         {
             return Request.Headers.Get(header);
@@ -136,8 +141,9 @@ namespace LogicReinc.WebServer
         //Data
         public object GetDataObject(Type type, BodyType body = BodyType.Undefined)
         {
-            char firstCharacter = DataString.Trim().FirstOrDefault();
             if (body == BodyType.Undefined)
+            {
+                char firstCharacter = DataString.Trim().FirstOrDefault();
                 switch (firstCharacter)
                 {
                     case '{':
@@ -148,10 +154,11 @@ namespace LogicReinc.WebServer
                         body = BodyType.XML;
                         break;
                     default:
-                        if(DataString.Contains("="))
+                        if (DataString.Contains("="))
                             body = BodyType.UrlEncoded;
                         break;
                 }
+            }
 
             switch(body)
             {
@@ -175,6 +182,8 @@ namespace LogicReinc.WebServer
                         return Data;
                     else
                         return null;
+                case BodyType.MultipartStream:
+                    return new MultiPartStream(DataStream);
                 default:
                     return null;
             }
@@ -194,6 +203,10 @@ namespace LogicReinc.WebServer
             Stream s = Response.OutputStream;
             s.Write(data, 0, data.Length);
             s.Flush();
+        }
+        public void Write(byte[] data, int length)
+        {
+            Response.OutputStream.Write(data, 0, length);
         }
         public void Write(object data, BodyType type = BodyType.JSON)
         {
@@ -218,16 +231,75 @@ namespace LogicReinc.WebServer
         }
 
 
+        public void Stream(Stream stream)
+        {
+            Response.StatusCode = 200;
+
+            Response.AddHeader("Accept-Ranges", "bytes");
+
+            string range = GetHeader("Range") ?? "";
+            if (!range.StartsWith("bytes="))
+            {
+                Close();
+                return;
+            }
+            range = range.Split('=')[1];
+            string[] rangeParts = range.Split('-');
+
+            long start;
+            long end;
+            if (!long.TryParse(rangeParts[0], out start))
+            {
+                ThrowCode(400);
+                return;
+            }
+            if (rangeParts.Length == 1 || !long.TryParse(rangeParts[1], out end))
+                end = stream.Length - 1;
+
+            long toRead = end - start + 1;
+            const long bufferSize = 4096;
+            Response.ContentLength64 = toRead;
+            Response.KeepAlive = true;
+            Response.SendChunked = false;
+            Response.Headers.Add("Content-Range", $"bytes {start}-{start + toRead - 1}/{stream.Length}");
+            Response.StatusCode = 206;
+            byte[] buffer = new byte[bufferSize];
+            int read = 0;
+            long readTotal = 0;
+            try
+            {
+                if(start > 0)
+                    stream.Seek(start, SeekOrigin.Begin);
+                using(Stream str = Response.OutputStream)
+                while ((read = stream.Read(buffer, 0, buffer.Length)) > 0 && readTotal < toRead)
+                {
+                    //Write(buffer, read);
+                    Write(buffer, read);
+                    readTotal += read;
+                }
+
+                Response.OutputStream.Flush();
+            }
+            catch(Exception ex)
+            {
+                //Connection closed
+                Console.WriteLine(ex.Message);
+            }
+            Close();
+        }
+
         public void Redirect(string url)
         {
             Response.Redirect(url);
             Close();
         }
 
+        
 
         //Final
         public void Close()
         {
+            Response.OutputStream.Flush();
             IsClosed = true;
             Response.Close();
         }

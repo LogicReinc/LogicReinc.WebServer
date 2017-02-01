@@ -33,13 +33,22 @@
                             You can enable this by simply registering SyncController in your Server:
                             <code class="col-xs-12">
 [MethodDescriptor(PostParameter = "obj")]
-public void SomeControllerMethod(string para1, SomeObject obj)
+public SomeObject SomeControllerMethod(string para1, SomeObject obj)
+{
+    return obj;
+}
+
+//OR
+
+public SomeObject SomeControllerMethod(string para1, [Body]SomeObject obj)
 {
     return obj;
 }
                             </code>
                             In this case the method will parse the post body to SomeObject type and return it back.
                             The format for both request/response depend on headers and server settings.
+
+                            In the second example I tell the controller that the obj argument is the body(post/etc). You can optionally specify the format of the body in the Body attribute constructor. 
                         </p>
                     </div>
                     <div class="item col-xs-12">
@@ -81,6 +90,41 @@ public void RegisterControllers()
 }
                             </code>
                         </p>
+                    </div>
+
+                    <div class="item col-xs-12">
+                        <h4><b>MultiPart/Formdata stream</b></h4>
+                        <p class="col-xs-12">
+                            The framework has a BodyType called MultiPartStream with a class of the same name. You can use this as body argument and use Multipart/formdata streamed. Handling files through a buffer instead of loading it into memory.
+                        </p>
+                        <code class="col-xs-12">
+public bool TestMultipart(string name, [Body(BodyType.MultipartStream)]MultiPartStream data)
+{
+    List<MultiPartSection> sections;
+    using (FileStream str = new FileStream(name, FileMode.Create))
+        sections = data.ReadAllSections((fileSection, buffer, read) =>
+        {
+            if (!string.IsNullOrEmpty(fileSection.Name))
+            switch (fileSection.Name)
+            {
+               case "file1":
+                   str.Write(buffer, 0, (int)read);
+                   break;
+            }
+    });
+    return true;
+}
+                        </code>
+                        <p class="col-xs-12">
+                            Test this controller below
+                        </p>
+                        <div>
+                            <form action="/example/TestMultipart?name=testfile" method="post" enctype="multipart/form-data">
+                                Upload file
+                                <input type="file" name="file1" id="fileToUpload">
+                                <input type="submit" value="Upload" name="submit">
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>

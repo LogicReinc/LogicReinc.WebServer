@@ -1,9 +1,11 @@
 ﻿using ExampleProject.Models;
 using LogicReinc.WebServer;
 using LogicReinc.WebServer.Attributes;
+using LogicReinc.WebServer.Components;
 using LogicReinc.WebServer.Enums;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -100,6 +102,40 @@ namespace ExampleProject.Controllers
                 IntProperty = 123,
                 StringProperty = "Lorem Ipsum Example Model"
             };
+        }
+
+        /// <summary>
+        /// [ControllerPath]/TestMultipart?name=[SomeString]
+        /// </summary>
+        /// <param name="name">GET parameter</param>
+        /// <param name="data">Multi-part/formdata body as MultiPartStream</param>
+        /// <returns>Server.DefaultResponseType or AcceptHeader type of bool (With or without apiwrap)</returns>
+        public bool TestMultipart(string name, [Body(BodyType.MultipartStream)]MultiPartStream data)
+        {
+            List<MultiPartSection> sections;
+            using (FileStream str = new FileStream(name, FileMode.Create))
+                sections = data.ReadAllSections((fileSection, buffer, read) =>
+                {
+                    if (!string.IsNullOrEmpty(fileSection.Name))
+                        switch (fileSection.Name)
+                        {
+                            case "file1":
+                                str.Write(buffer, 0, (int)read);
+                                break;
+                        }
+                });
+
+            return true;
+        }
+
+        /// <summary>
+        /// [ControllerPath]/TestStream
+        /// </summary>
+        public void TestStream()
+        {
+            Request.Response.ContentType = "video/mp4";
+            using (FileStream testVideo = new FileStream("testVideo.mp4", FileMode.Open, FileAccess.Read, FileShare.Read))
+                Stream(testVideo);
         }
     }
 }

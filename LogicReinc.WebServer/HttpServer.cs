@@ -42,6 +42,8 @@ namespace LogicReinc.WebServer
 
         public BodyType DefaultRequestType { get; set; } = BodyType.JSON;
         public BodyType DefaultResponseType { get; set; } = BodyType.JSON;
+        public List<BodyType> AllowedResponseTypes { get; set; } = new List<BodyType>();
+
         public IOHandlingType IOHandling { get; set; } = IOHandlingType.WorkerPool;
 
         public event OnRequestDelegate OnDefaultRequest;
@@ -273,6 +275,15 @@ namespace LogicReinc.WebServer
                 if(!req.IsClosed)
                     Try.Action(() => req.Close(), null);
             }
+        }
+
+        public bool IsAllowedResponse(BodyType type)
+        {
+            if (AllowedResponseTypes.Count == 0)
+                return true;
+            if (AllowedResponseTypes.Contains(type))
+                return true;
+            return false;
         }
 
         public void Log(string location, string msg)

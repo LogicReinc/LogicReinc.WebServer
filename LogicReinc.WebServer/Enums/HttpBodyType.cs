@@ -13,7 +13,8 @@ namespace LogicReinc.WebServer.Enums
         XML,
         Raw,
         UrlEncoded,
-        Razor
+        Razor,
+        MultipartStream
     }
 }
 
