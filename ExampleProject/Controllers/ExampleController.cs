@@ -133,8 +133,8 @@ namespace ExampleProject.Controllers
         /// </summary>
         public void TestStream()
         {
-            Request.Response.ContentType = "video/mp4";
-            using (FileStream testVideo = new FileStream("testVideo.mp4", FileMode.Open, FileAccess.Read, FileShare.Read))
+            Request.Response.ContentType = "video/webm";
+            using (FileStream testVideo = new FileStream("test.webm", FileMode.Open, FileAccess.Read, FileShare.Read))
                 Stream(testVideo);
         }
     }

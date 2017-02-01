@@ -32,6 +32,7 @@ namespace LogicReinc.WebServer.Components
             public FileInfo Info { get; private set; }
             public string Path { get; private set; }
             public DateTime LastUpdate { get; private set; }
+            public DateTime LastWrite { get; private set; }
             public byte[] Data { get; private set; }
 
             public CachedFile(FileCache container, string path)
@@ -42,7 +43,7 @@ namespace LogicReinc.WebServer.Components
 
             public byte[] Get()
             {
-                if (Data == null || LastUpdate.Subtract(DateTime.Now) > Container.CacheDuration)
+                if (Data == null || (DateTime.Now.Subtract(LastUpdate) > Container.CacheDuration))
                     Update();
                 return Data;
             }
@@ -50,9 +51,12 @@ namespace LogicReinc.WebServer.Components
             public void Update()
             {
                 LastUpdate = DateTime.Now;
-                if (!File.Exists(Path))
+                FileInfo f = new FileInfo(Path);
+                if (!f.Exists)
                     throw new FileNotFoundException($"File {System.IO.Path.GetFileName(Path)} could not be found");
-                Data = File.ReadAllBytes(Path);
+                if(LastWrite < f.LastWriteTime)
+                    Data = File.ReadAllBytes(Path);
+                LastWrite = f.LastWriteTime;
             }
         }
     }
