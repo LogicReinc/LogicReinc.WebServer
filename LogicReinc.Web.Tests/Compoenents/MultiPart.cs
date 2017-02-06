@@ -31,6 +31,11 @@ Content-Type: text/html
 
 -----------------------------9051914041544843365972754266--
 ";
+
+        const string section1Data = "text default";
+        const string section2Data = "Content of a.txt.\r\n";
+        const string section3Data = "<!DOCTYPE html><title>Content of a.html.</title>\r\n";
+
         static byte[] exampleBytes = Encoding.UTF8.GetBytes(EXAMPLE);
 
         [ClassInitialize]
@@ -57,9 +62,18 @@ Content-Type: text/html
                 Console.WriteLine($"Content: {section.DataAsString}");
                 Console.WriteLine("-------------------");
             }
+
+
+            Assert.AreEqual(3, parts.Sections.Count, "Not the correct amount of sections");
+            Assert.IsNotNull(parts.Sections.FirstOrDefault(x => x.Name == "text"), "Missing Section");
+            Assert.IsNotNull(parts.Sections.FirstOrDefault(x => x.Name == "file1"), "Missing Section");
+            Assert.IsNotNull(parts.Sections.FirstOrDefault(x => x.Name == "file2"), "Missing Section");
+            Assert.AreEqual(section1Data, parts.Sections.FirstOrDefault(x => x.Name == "text")?.DataAsString, "Incorrect data");
+            Assert.AreEqual(section2Data, parts.Sections.FirstOrDefault(x => x.Name == "file1")?.DataAsString, "Incorrect data");
+            Assert.AreEqual(section3Data, parts.Sections.FirstOrDefault(x => x.Name == "file2")?.DataAsString, "Incorrect data");
         }
 
-        [TestMethod]
+        //[TestMethod]
         public void CreateMultipartTestFile()
         {
             byte[] buffer = new byte[4096];
@@ -179,6 +193,12 @@ Content-Type: application/octet-stream
                 Console.WriteLine($"Streamed: {section.Streamed}");
                 Console.WriteLine("-------------------");
             }
+
+
+            FileInfo fOut1 = new FileInfo("File1.txt");
+            FileInfo fOut2 = new FileInfo("File2.txt");
+            Assert.AreEqual(Encoding.UTF8.GetBytes(section2Data).Length, fOut1.Length, "Malformed data");
+            Assert.AreEqual(Encoding.UTF8.GetBytes(section3Data).Length, fOut2.Length, "Malformed data");
         }
 
         [TestMethod]

@@ -5,6 +5,7 @@ using LogicReinc.WebServer.Components;
 using LogicReinc.WebServer.Enums;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -55,7 +56,7 @@ namespace ExampleProject.Controllers
         /// [ControllerPath]/TestPostJSON
         /// </summary>
         /// <param name="jsonObj">Json of ExampleObject As Body</param>
-        /// <returns>Json of ExampleObject</returns>
+        /// <returns>Json of ExampleObject</returns>`
         [MethodDescriptorAttribute(PostParameter = "jsonObj", RequestType = BodyType.JSON, ResponseType = BodyType.JSON)]
         public ExampleObject TestPostJSON(ExampleObject jsonObj)
         {
@@ -103,16 +104,18 @@ namespace ExampleProject.Controllers
                 StringProperty = "Lorem Ipsum Example Model"
             };
         }
-
+    
         /// <summary>
         /// [ControllerPath]/TestMultipart?name=[SomeString]
         /// </summary>
         /// <param name="name">GET parameter</param>
         /// <param name="data">Multi-part/formdata body as MultiPartStream</param>
         /// <returns>Server.DefaultResponseType or AcceptHeader type of bool (With or without apiwrap)</returns>
-        public bool TestMultipart(string name, [Body(BodyType.MultipartStream)]MultiPartStream data)
+        public string TestMultipart(string name, [Body(BodyType.MultipartStream)]MultiPartStream data)
         {
             List<MultiPartSection> sections;
+            Stopwatch tstop = new Stopwatch();
+            tstop.Start();
             using (FileStream str = new FileStream(name, FileMode.Create))
                 sections = data.ReadAllSections((fileSection, buffer, read) =>
                 {
@@ -125,7 +128,8 @@ namespace ExampleProject.Controllers
                         }
                 });
 
-            return true;
+            tstop.Stop();
+            return $"Uploaded in: {tstop.ElapsedMilliseconds}";
         }
 
         /// <summary>

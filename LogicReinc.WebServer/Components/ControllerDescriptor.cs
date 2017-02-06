@@ -154,49 +154,10 @@ namespace LogicReinc.WebServer.Components
                                 ((APIWrap)result).Exception.StackTrace = "";
                             if (responseType == BodyType.Raw)
                                 responseType = Server.DefaultResponseType;
+                            HandleResult(Server, request, call, responseType, result, false);
                         }
                         else
-                        {
-                            resultType = result.GetType();
-                            if (UseWrap && responseType != BodyType.Raw && responseType != BodyType.Razor)
-                                result = new APIWrap(result);
-
-                            if (!Server?.IsAllowedResponse(responseType) ?? false)
-                                throw new Exceptions.ConfigurationException("Requested response type is not allowed");
-                            switch (responseType)
-                            {
-                                case BodyType.Razor:
-                                    HandleRazor(request, call, result);
-                                    break;
-                                case BodyType.Raw:
-                                    if (resultType == typeof(byte[]))
-                                    {
-                                        request.Response.ContentType = "application/octet-stream";
-                                        request.Write((byte[])result);
-                                    }
-                                    else
-                                    {
-                                        request.Response.ContentType = "text/plain";
-                                        request.Write(result.ToString());
-                                    }
-                                    break;
-                                case BodyType.JSON:
-                                    request.Response.ContentType = "application/json";
-                                    request.Write(JsonConvert.SerializeObject(result));
-                                    break;
-                                case BodyType.XML:
-                                    if (UseWrap)
-                                        XmlParser.AddSubType(typeof(APIWrap), resultType);
-                                    request.Response.ContentType = "application/xml";
-                                    request.Write(XmlParser.Serialize(result));
-                                    break;
-                                case BodyType.UrlEncoded:
-                                    throw new NotSupportedException();
-                                case BodyType.MultipartStream:
-                                    throw new NotSupportedException();
-
-                            }
-                        }
+                            HandleResult(Server, request, call, responseType, result, UseWrap);
                     }
                 }
                 catch (Exception ex)
@@ -214,6 +175,49 @@ namespace LogicReinc.WebServer.Components
             }
             else
                 return false;
+        }
+
+        private static void HandleResult(HttpServer server, HttpRequest request, CallDescriptor call, BodyType responseType, object result, bool useWrap)
+        {
+            Type resultType = result.GetType();
+            if (useWrap && responseType != BodyType.Raw && responseType != BodyType.Razor)
+                result = new APIWrap(result);
+
+            if (!server?.IsAllowedResponse(responseType) ?? false)
+                throw new Exceptions.ConfigurationException("Requested response type is not allowed");
+            switch (responseType)
+            {
+                case BodyType.Razor:
+                    HandleRazor(request, call, result);
+                    break;
+                case BodyType.Raw:
+                    if (resultType == typeof(byte[]))
+                    {
+                        request.Response.ContentType = "application/octet-stream";
+                        request.Write((byte[])result);
+                    }
+                    else
+                    {
+                        request.Response.ContentType = "text/plain";
+                        request.Write(result.ToString());
+                    }
+                    break;
+                case BodyType.JSON:
+                    request.Response.ContentType = "application/json";
+                    request.Write(JsonConvert.SerializeObject(result));
+                    break;
+                case BodyType.XML:
+                    if (useWrap)
+                        XmlParser.AddSubType(typeof(APIWrap), resultType);
+                    request.Response.ContentType = "application/xml";
+                    request.Write(XmlParser.Serialize(result));
+                    break;
+                case BodyType.UrlEncoded:
+                    throw new NotSupportedException();
+                case BodyType.MultipartStream:
+                    throw new NotSupportedException();
+
+            }
         }
 
         //Handling

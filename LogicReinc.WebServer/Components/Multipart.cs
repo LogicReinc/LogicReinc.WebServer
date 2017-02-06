@@ -1,4 +1,5 @@
 ﻿using LogicReinc.Extensions;
+using LogicReinc.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,6 +15,7 @@ namespace LogicReinc.WebServer.Components
     {
         static byte[] newLineBytes = Encoding.UTF8.GetBytes("\r\n");
         Stream stream;
+        PatternizedStream pStr;
         byte[] splitter;
 
         public MultiPartStream(Stream stream)
@@ -22,12 +24,16 @@ namespace LogicReinc.WebServer.Components
                 throw new ArgumentNullException();
             this.stream = stream;
             splitter = stream.ReadTill(newLineBytes);
+            byte[] fileEnd = new byte[splitter.Length + newLineBytes.Length];
+            newLineBytes.CopyTo(fileEnd, 0);
+            splitter.CopyTo(fileEnd, newLineBytes.Length);
+            pStr = new PatternizedStream(stream, fileEnd);
         }
 
 
         public MultiPartSection ReadSection(Action<MultiPartSection, byte[], long> fileHandler)
         {
-            return MultiPartSection.ParseStreaming(splitter, stream, fileHandler);
+            return MultiPartSection.ParseStreaming(splitter, pStr, fileHandler);
         }
 
         public List<MultiPartSection> ReadAllSections(Action<MultiPartSection, byte[], long> fileHandler)
@@ -46,6 +52,7 @@ namespace LogicReinc.WebServer.Components
         public void Dispose()
         {
             stream.Dispose();
+            pStr.Dispose();
         }
     }
 
@@ -117,7 +124,7 @@ namespace LogicReinc.WebServer.Components
         public bool Streamed { get; set; }
 
 
-        public static MultiPartSection ParseStreaming(byte[] splitter, Stream stream, Action<MultiPartSection, byte[], long> fileHandler)
+        public static MultiPartSection ParseStreaming(byte[] splitter, PatternizedStream stream, Action<MultiPartSection, byte[], long> fileHandler)
         {
 
             byte[] header = null;
@@ -127,6 +134,8 @@ namespace LogicReinc.WebServer.Components
             if (header.Length == 0)
                 return null;
             string headerText = Encoding.UTF8.GetString(header);
+            if (headerText == "--")
+                return null;
             //Parse Header
             Regex re = new Regex(@"(?<=Content\-Type:)(.*?)(?=$)");
             Match contentTypeMatch = re.Match(headerText);
@@ -155,7 +164,8 @@ namespace LogicReinc.WebServer.Components
                 long read = 0;
                 byte[] buffer = new byte[4096];
                 bool isEnd = false;
-                while((read = stream.ReadTill(fileEnd, buffer, 0, buffer.Length, out isEnd)) > 0)
+
+                while((read = stream.ReadTill(buffer, 0, buffer.Length, out isEnd)) > 0)
                 {
                     fileHandler(section, buffer, read);
                     if (isEnd)
