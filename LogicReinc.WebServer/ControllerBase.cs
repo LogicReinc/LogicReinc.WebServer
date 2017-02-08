@@ -46,7 +46,10 @@ namespace LogicReinc.WebServer
         public void Stream(Stream stream) => Request.Stream(stream);
 
         public void Redirect(string newUrl) => Request.Redirect(newUrl);
+        public void SetCode(int code) => Request.SetCode(code);
         public void ThrowCode(int code) => Request.ThrowCode(code);
+        public void ThrowCode(int code, byte[] data) => Request.ThrowCode(code, data);
+        public void ThrowCode(int code, string data) => Request.ThrowCode(code, data);
 
         //Wrapper Properties
         public string Token => Request.Token;

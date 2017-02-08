@@ -167,15 +167,14 @@ namespace LogicReinc.WebSercer.Controllers
                     .DefineFunction("ResolveReferences", @"if (typeof json === 'string')
         json = JSON.parse(json);
 
-    var byid = {}, // all objects by id
-        refs = []; // references to objects that could not be resolved
+    var byid = {};
+    var refs = [];
     json = (function recurse(obj, prop, parent) {
-        if (typeof obj !== 'object' || !obj) // a primitive value
+        if (typeof obj !== 'object' || !obj)
             return obj;
         if (Object.prototype.toString.call(obj) === '[object Array]') {
             for (var i = 0; i < obj.length; i++)
-                // check also if the array element is not a primitive value
-                if (typeof obj[i] !== 'object' || !obj[i]) // a primitive value
+                if (typeof obj[i] !== 'object' || !obj[i])
                     continue;
                 else if (""$ref "" in obj[i])
                     obj[i] = recurse(obj[i], i, obj);
@@ -183,30 +182,28 @@ namespace LogicReinc.WebSercer.Controllers
                     obj[i] = recurse(obj[i], prop, obj);
                 return obj;
             }
-            if (""$ref"" in obj) { // a reference
+            if (""$ref"" in obj) {
                 var ref = obj.$ref;
                 if (ref in byid)
                 return byid[ref];
-                // else we have to make it lazy:
                 refs.push([parent, prop, ref]);
                 return;
             } else if (""$id"" in obj) {
                 var id = obj.$id;
                 delete obj.$id;
-                if (""$values"" in obj) // an array
+                if (""$values"" in obj)
                 obj = obj.$values.map(recurse);
-            else // a plain object
+            else
                 for (var prop in obj)
                     obj[prop] = recurse(obj[prop], prop, obj);
                 byid[id] = obj;
             }
             return obj;
-        })(json); // run it!
+        })(json);
 
-    for (var i = 0; i<refs.length; i++) { // resolve previously unknown references
+    for (var i = 0; i<refs.length; i++) {
         var ref = refs[i];
         ref[0][ref[1]] = byid[ref[2]];
-        // Notice that this throws if you put in a reference at top-level
     }
     return json;", "json");
 

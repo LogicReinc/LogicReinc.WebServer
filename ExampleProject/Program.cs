@@ -48,8 +48,7 @@ namespace ExampleProject
 
             public override void DefaultHandling(HttpRequest request)
             {
-                request.Write("Path not found");
-                request.ThrowCode(404);
+                request.ThrowCode(404, "Path not found");
             }
 
             public override void RegisterControllers()

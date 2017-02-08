@@ -192,9 +192,29 @@ namespace LogicReinc.WebServer
 
 
         //Manipulation
+        public void SetCode(int code)
+        {
+            this.Response.StatusCode = code;
+        }
+
         public void ThrowCode(int code)
         {
             this.Response.StatusCode = code;
+            this.Close();
+        }
+
+        public void ThrowCode(int code, byte[] data)
+        {
+            this.Response.StatusCode = code;
+            this.Response.OutputStream.Write(data, 0, data.Length);
+            this.Close();
+        }
+        
+        public void ThrowCode(int code, string data)
+        {
+            this.Response.StatusCode = code;
+            byte[] sData = Encoding.UTF8.GetBytes(data);
+            this.Response.OutputStream.Write(sData, 0, sData.Length);
             this.Close();
         }
 
