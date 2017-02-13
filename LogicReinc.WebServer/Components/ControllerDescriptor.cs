@@ -152,7 +152,7 @@ namespace LogicReinc.WebServer.Components
                             result = new APIWrap(ex);
                             if (!Server.Debug)
                                 ((APIWrap)result).Exception.StackTrace = "";
-                            if (responseType == BodyType.Raw)
+                            if (responseType == BodyType.Raw || responseType == BodyType.Razor)
                                 responseType = Server.DefaultResponseType;
                             HandleResult(Server, request, call, responseType, result, false);
                         }
