@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="Attributes\CachingAttibute.cs" />
     <Compile Include="Attributes\ControllerRegistrationAttribute.cs" />
+    <Compile Include="Attributes\JsonSerializerOptions.cs" />
     <Compile Include="Attributes\MethodDescriptorAttribute.cs" />
     <Compile Include="Attributes\IgnoreControllerMethodAttribute.cs" />
     <Compile Include="Attributes\ParameterDescriptorAttribute.cs" />

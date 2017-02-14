@@ -11,6 +11,7 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static LogicReinc.WebServer.Components.ControllerDescriptor;
 
 namespace LogicReinc.WebServer
 {
@@ -139,7 +140,7 @@ namespace LogicReinc.WebServer
 
 
         //Data
-        public object GetDataObject(Type type, BodyType body = BodyType.Undefined)
+        public object GetDataObject(Type type, BodyType body = BodyType.Undefined, CallDescriptor call = null)
         {
             if (body == BodyType.Undefined)
             {
@@ -163,7 +164,11 @@ namespace LogicReinc.WebServer
             switch(body)
             {
                 case BodyType.JSON:
-                    return JsonConvert.DeserializeObject(DataString, type);
+                    JsonSerializerSettings settings = call?.JsonSerialization?.Request;
+                    if (settings != null)
+                        return JsonConvert.DeserializeObject(DataString, type, settings);
+                    else
+                        return JsonConvert.DeserializeObject(DataString, type);
                 case BodyType.XML:
                     return XmlConvert.DeserializeObject(DataString, type);
                 case BodyType.UrlEncoded:

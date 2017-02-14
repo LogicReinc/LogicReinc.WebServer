@@ -204,7 +204,12 @@ namespace LogicReinc.WebServer.Components
                     break;
                 case BodyType.JSON:
                     request.Response.ContentType = "application/json";
-                    request.Write(JsonConvert.SerializeObject(result));
+
+                    JsonSerializerSettings settings = call.JsonSerialization?.Response;
+                    if (settings != null)
+                        request.Write(JsonConvert.SerializeObject(result, settings));
+                    else
+                        request.Write(JsonConvert.SerializeObject(result));
                     break;
                 case BodyType.XML:
                     if (useWrap)
@@ -294,7 +299,7 @@ namespace LogicReinc.WebServer.Components
                         }
                     }
 
-                    paras.Add(request.GetDataObject(parameterType, bType));
+                    paras.Add(request.GetDataObject(parameterType, bType, call));
                 }
                 else
                 {
@@ -324,6 +329,8 @@ namespace LogicReinc.WebServer.Components
         {
             public MethodDescriptorAttribute Descriptor { get; set; }
             public CachingAttribute CacheHeader { get; set; }
+            public JsonSerializerConfig JsonSerialization { get; set; }
+
             public RequiresTokenAttribute TokenRequirements { get; set; }
             public MethodInfo Info { get; set; }
             public List<ParameterDescriptor> Parameters { get; set; }
@@ -335,6 +342,7 @@ namespace LogicReinc.WebServer.Components
                 TokenRequirements = RequiresTokenAttribute.GetAttribute(method);
                 Info = method;
                 Parameters = Info.GetParameters().Select(x=>new ParameterDescriptor(x)).ToList();
+                JsonSerialization = JsonSerializerAttribute.GetAttribute(method);
             }
         }
 
