@@ -28,18 +28,21 @@ namespace LogicReinc.WebSercer.Controllers
 
             ParameterInfo bodyParameter = info.GetParameters().FirstOrDefault(x => BodyAttribute.HasAttribute(x));
             string bodyParaName = (bodyParameter != null) ? bodyParameter.Name : "";
-
+            BodyAttribute bodyAttr = null;
+            if (bodyParameter != null)
+                bodyAttr = BodyAttribute.GetAttribute(bodyParameter);
             
 
             List<string> stringParas = paras.Select(x => x.Name).ToList();
 
             MethodDescriptorAttribute descriptor = MethodDescriptorAttribute.GetDescriptor(info);
             if (descriptor != null)
-            {
-                stringParas = new List<string>();
+            { 
+                //stringParas = new List<string>();
 
                 foreach (string para in descriptor.Parameters)
-                    stringParas.Add(para);
+                    if(!stringParas.Contains(para))
+                        stringParas.Add(para);
 
                 if (descriptor.HasPostParameter)
                     bodyParaName = descriptor.PostParameter;
@@ -62,21 +65,34 @@ namespace LogicReinc.WebSercer.Controllers
 
             if (RequiresTokenAttribute.HasAttribute(info))
                 code.AddCode("if(!t) t = Sync.Token;");
+            
+                string baseUrlPrepend = ((APIBaseUrl != "") ? $"{APIBaseUrl}/" : "");
+                if (!string.IsNullOrEmpty(bodyParaName))
+                {
+                    if (bodyAttr != null && bodyAttr.BodyType == BodyType.Raw)
+                    {
+                        if (descriptor != null && descriptor.ResponseType == BodyType.Raw)
+                            code.AddCode($"SyncPostRawRaw('{baseUrlPrepend + controller}/{info.Name}{paraString.ToString()}', {bodyParaName}, callback);");
+                        else
+                            code.AddCode($"SyncPostRawJson('{baseUrlPrepend + controller}/{info.Name}{paraString.ToString()}', {bodyParaName}, callback);");
+                    }
+                    else
+                    {
+                        if (descriptor != null && descriptor.ResponseType == BodyType.Raw)
+                            code.AddCode($"SyncPostJsonRaw('{baseUrlPrepend + controller}/{info.Name}{paraString.ToString()}', {"JSON.stringify(" + bodyParaName + ")"}, callback);");
+                        else
+                            code.AddCode($"SyncPostJson('{baseUrlPrepend + controller}/{info.Name}{paraString.ToString()}', {"JSON.stringify(" + bodyParaName + ")"}, callback);");
+                    }
 
-            if (APIBaseUrl == "")
-            {
-                if (!string.IsNullOrEmpty(bodyParaName))
-                    code.AddCode($"SyncPostJson('{controller}/{info.Name}{paraString.ToString()}', {"JSON.stringify(" + bodyParaName + ")"}, callback);");
+                }
                 else
-                    code.AddCode($"SyncGetJson('{controller}/{info.Name}{paraString.ToString()}', callback);");
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(bodyParaName))
-                    code.AddCode($"SyncPostJson('{APIBaseUrl}/{controller}/{info.Name}{paraString.ToString()}', JSON.stringify({bodyParaName}), callback);");
-                else
-                    code.AddCode($"SyncGetJson('{APIBaseUrl}/{controller}/{info.Name}{paraString.ToString()}', callback);");
-            }
+                {
+                    if (descriptor != null && descriptor.ResponseType == BodyType.Raw)
+                        code.AddCode($"SyncGetRaw('{baseUrlPrepend + controller}/{info.Name}{paraString.ToString()}', callback);");
+                    else
+                        code.AddCode($"SyncGetJson('{baseUrlPrepend + controller}/{info.Name}{paraString.ToString()}', callback);");
+                }
+            
             if (!string.IsNullOrEmpty(bodyParaName))
             {
                 if (stringParas.LastOrDefault() == "t")
@@ -143,69 +159,112 @@ namespace LogicReinc.WebSercer.Controllers
 
                 if (!isUpdate)
                     js.DefineFunction("SyncGetJson", @"
-    var ajax = new XMLHttpRequest();
-    ajax.onreadystatechange = function () {
-        if (ajax.readyState == 4 && ajax.status == 200)
-            /*callback(JSON.parse(ajax.responseText))*/
-            callback(ResolveReferences(ajax.responseText))
-    };
-    ajax.open('GET', url, true);
-    ajax.setRequestHeader('Accept', 'application/json');
-        ajax.send();
-", "url", "callback")
+                        var ajax = new XMLHttpRequest();
+                        ajax.onreadystatechange = function () {
+                            if (ajax.readyState == 4 && ajax.status == 200)
+                                /*callback(JSON.parse(ajax.responseText))*/
+                                callback(ResolveReferences(ajax.responseText))
+                        };
+                        ajax.open('GET', url, true);
+                        ajax.setRequestHeader('Accept', 'application/json');
+                            ajax.send();
+                    ", "url", "callback")
                     .DefineFunction("SyncPostJson", @"
-    var ajax = new XMLHttpRequest();
-    ajax.onreadystatechange = function () {
-        if (ajax.readyState == 4 && ajax.status == 200) {
-            /*callback(JSON.parse(ajax.responseText))*/
-            callback(ResolveReferences(ajax.responseText))
-        }
-    };
-    ajax.open('POST', url, true);
-    ajax.send(data);
-", "url", "data", "callback")
-                    .DefineFunction("ResolveReferences", @"if (typeof json === 'string')
-        json = JSON.parse(json);
+                        var ajax = new XMLHttpRequest();
+                        ajax.onreadystatechange = function () {
+                            if (ajax.readyState == 4 && ajax.status == 200) {
+                                /*callback(JSON.parse(ajax.responseText))*/
+                                callback(ResolveReferences(ajax.responseText))
+                            }
+                        };
+                        ajax.open('POST', url, true);
+                        ajax.send(data);
+                    ", "url", "data", "callback")
+                    .DefineFunction("SyncGetRaw", @"
+                        var ajax = new XMLHttpRequest();
+                        ajax.onreadystatechange = function () {
+                            if (ajax.readyState == 4 && ajax.status == 200)
+                                /*callback(JSON.parse(ajax.responseText))*/
+                                callback(ajax.responseText)
+                        };
+                        ajax.open('GET', url, true);
+                        ajax.setRequestHeader('Accept', 'application/json');
+                            ajax.send();
+                    ", "url", "callback")
+                    .DefineFunction("SyncPostJsonRaw", @"
+                        var ajax = new XMLHttpRequest();
+                        ajax.onreadystatechange = function () {
+                            if (ajax.readyState == 4 && ajax.status == 200) {
+                                callback(ajax.responseText)
+                            }
+                        };
+                        ajax.open('POST', url, true);
+                        ajax.send(data);
+                    ", "url", "data", "callback")
+                    .DefineFunction("SyncPostRawRaw", @"
+                        var ajax = new XMLHttpRequest();
+                        ajax.onreadystatechange = function () {
+                            if (ajax.readyState == 4 && ajax.status == 200) {
+                                callback(ajax.responseText)
+                            }
+                        };
+                        ajax.open('POST', url, true);
+                        ajax.send(data);
+                    ", "url", "data", "callback")
+                    .DefineFunction("SyncPostRawJson", @"
+                        var ajax = new XMLHttpRequest();
+                        ajax.onreadystatechange = function () {
+                            if (ajax.readyState == 4 && ajax.status == 200) {
+                                callback(ResolveReferences(ajax.responseText))
+                            }
+                        };
+                        ajax.open('POST', url, true);
+                        ajax.send(data);
+                    ", "url", "data", "callback")
 
-    var byid = {};
-    var refs = [];
-    json = (function recurse(obj, prop, parent) {
-        if (typeof obj !== 'object' || !obj)
-            return obj;
-        if (Object.prototype.toString.call(obj) === '[object Array]') {
-            for (var i = 0; i < obj.length; i++)
-                if (typeof obj[i] !== 'object' || !obj[i])
-                    continue;
-                else if (""$ref "" in obj[i])
-                    obj[i] = recurse(obj[i], i, obj);
-                else
-                    obj[i] = recurse(obj[i], prop, obj);
-                return obj;
-            }
-            if (""$ref"" in obj) {
-                var ref = obj.$ref;
-                if (ref in byid)
-                return byid[ref];
-                refs.push([parent, prop, ref]);
-                return;
-            } else if (""$id"" in obj) {
-                var id = obj.$id;
-                delete obj.$id;
-                if (""$values"" in obj)
-                obj = obj.$values.map(recurse);
-            else
-                for (var prop in obj)
-                    obj[prop] = recurse(obj[prop], prop, obj);
-                byid[id] = obj;
-            }
-            return obj;
-        })(json);
+                    .DefineFunction("ResolveReferences", @"
+                        if (typeof json === 'string')
+                            json = JSON.parse(json);
 
-    for (var i = 0; i<refs.length; i++) {
-        var ref = refs[i];
-        ref[0][ref[1]] = byid[ref[2]];
-    }
-    return json;", "json");
+                        var byid = {};
+                        var refs = [];
+                        json = (function recurse(obj, prop, parent) {
+                            if (typeof obj !== 'object' || !obj)
+                                return obj;
+                            if (Object.prototype.toString.call(obj) === '[object Array]') {
+                                for (var i = 0; i < obj.length; i++)
+                                    if (typeof obj[i] !== 'object' || !obj[i])
+                                        continue;
+                                    else if (""$ref "" in obj[i])
+                                        obj[i] = recurse(obj[i], i, obj);
+                                    else
+                                        obj[i] = recurse(obj[i], prop, obj);
+                                    return obj;
+                                }
+                                if (""$ref"" in obj) {
+                                    var ref = obj.$ref;
+                                    if (ref in byid)
+                                    return byid[ref];
+                                    refs.push([parent, prop, ref]);
+                                    return;
+                                } else if (""$id"" in obj) {
+                                    var id = obj.$id;
+                                    delete obj.$id;
+                                    if (""$values"" in obj)
+                                    obj = obj.$values.map(recurse);
+                                else
+                                    for (var prop in obj)
+                                        obj[prop] = recurse(obj[prop], prop, obj);
+                                    byid[id] = obj;
+                                }
+                                return obj;
+                            })(json);
+
+                        for (var i = 0; i<refs.length; i++) {
+                            var ref = refs[i];
+                            ref[0][ref[1]] = byid[ref[2]];
+                        }
+                        return json;", "json");
 
 
                 if (Authenticated)

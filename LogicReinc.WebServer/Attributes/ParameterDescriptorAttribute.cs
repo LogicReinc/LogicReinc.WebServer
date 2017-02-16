@@ -43,5 +43,10 @@ namespace LogicReinc.WebServer.Attributes
         {
             return info.GetCustomAttribute<BodyAttribute>() != null;
         }
+
+        public static BodyAttribute GetAttribute(ParameterInfo info)
+        {
+            return info.GetCustomAttribute<BodyAttribute>();
+        }
     }
 }
