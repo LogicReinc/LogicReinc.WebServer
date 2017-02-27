@@ -1,4 +1,5 @@
 ﻿using LogicReinc.Security;
+using LogicReinc.Security.TokenSystem;
 using LogicReinc.WebServer;
 using LogicReinc.WebServer.Controllers;
 using System;
@@ -19,30 +20,28 @@ namespace ExampleProject
         public string UniqueName => "ExampleProject";
 
         public bool HasUserData => true;
+        public bool SendUserData => true;
 
-        public bool VerifyUser(string username, string password)
+        public bool VerifyUser(string username, string password, out object userData)
         {
             //Normally database lookup for comparing
-            if (username.ToLower() == "admin" && Cryptographics.Hash(password, HashType.Sha256) == ImaginaryAdminPass)
+            if ((username.ToLower() == "admin" && Cryptographics.Hash(password, HashType.Sha256) == ImaginaryAdminPass) || ImaginaryOtherUsers.Contains(username.ToLower()))
+            {
+                if (username.ToLower() == "admin")
+                    userData = ImaginaryAdminID;
+                else 
+                    userData = Guid.NewGuid().ToString();
                 return true;
-            if (ImaginaryOtherUsers.Contains(username.ToLower()))
-                return true;
+            }
+
+            userData = null;
             return false;
         }
 
-        public object GetUserData(string username)
-        {
-            //Normally database lookup for id
-            if (username.ToLower() == "admin")
-                return ImaginaryAdminID;
-
-            return Guid.NewGuid().ToString(); //Imaginary User ID
-        }
-
-        public int GetTokenLevel(string token)
+        public int GetTokenLevel(Token token)
         {
             //Normally database lookup for security level
-            string data = (string)SecurityController<SecSets>.GetTokenData(token);
+            string data = (string)token.Data;
             if (data == ImaginaryAdminID)
                 return 5;
             return 0;

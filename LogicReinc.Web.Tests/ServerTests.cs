@@ -55,11 +55,12 @@ namespace LogicReinc.Web.Tests
         public class SecuritySettings : ISecuritySettings
         {
             public bool HasUserData => true;
+            public bool SendUserData => false;
 
-            public int GetTokenLevel(string token)
+            public int GetTokenLevel(Token token)
             {
                 string data = 
-                    (string)SecurityController<SecuritySettings>.GetTokenData(token);
+                    (string)token.Data;
                 if (data == "admin")
                     return 5;
                 else
@@ -71,8 +72,9 @@ namespace LogicReinc.Web.Tests
                 return username;
             }
 
-            public bool VerifyUser(string username, string password)
+            public bool VerifyUser(string username, string password, out object userData)
             {
+                userData = null;
                 if (username.ToLower() == "admin" && password == AdminPassword)
                     return true;
                 else if (OtherUsers.Contains(username.ToLower()))

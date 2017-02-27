@@ -53,20 +53,22 @@ namespace LogicReinc.WebServer.Controllers
            
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(pass))
                 throw new ArgumentException("Username or Password was not valid");
-            
-            if (!Settings.VerifyUser(username, pass))
-                throw new ForbiddenException("Credentials are not correct");
+
 
             object userData = null;
 
-            if (Settings.HasUserData)
-                userData = Settings.GetUserData(username);
+            if (!Settings.VerifyUser(username, pass, out userData))
+                throw new InvalidCredentialsException("Credentials are not correct");
+
+
+            //if (Settings.HasUserData)
+            //    userData = Settings.GetUserData(username);
             return tokenSysten.CreateToken(GenerateUnique(request), userData);
         }
 
         public static object GetTokenData(string token) => tokenSysten.GetTokenData(token);
 
-        public static int GetTokenLevel(string token)
+        public static int GetTokenLevel(Token token)
         {
             //string data = GetTokenData(token);
             return Settings.GetTokenLevel(token);
@@ -77,16 +79,16 @@ namespace LogicReinc.WebServer.Controllers
         public virtual Token GetToken()
         {
             SecurityUser user = Request.GetDataObject<SecurityUser>();
-            string parameter = user.Username;
-            string pass = user.Password;
-
-            if (string.IsNullOrEmpty(parameter) || string.IsNullOrEmpty(pass))
-                throw new ArgumentException("Username or Password was not valid");
-
-            if (!Settings.VerifyUser(parameter, pass))
-                throw new InvalidCredentialsException("Credentials are not correct");
-
-            return SecurityController<SecSettings>.GetToken(Request, user);
+            Token token = SecurityController<SecSettings>.GetToken(Request, user);
+            if (!Settings.SendUserData)
+                return new Token()
+                {
+                    AccessToken = token.AccessToken,
+                    RefreshToken = token.RefreshToken,
+                    Duration = token.Duration
+                };
+            else
+                return token;
         }
 
         //APICALL
@@ -121,12 +123,15 @@ namespace LogicReinc.WebServer.Controllers
                 try
                 {
                     string token = request.Parameters["t"];
+
                     request.Token = token;
                     request.TokenData = tokenSysten.GetTokenData(token);
                     if (VerifyToken(request, token))
                     {
                         request.Authenticated = true;
-                        request.AuthenticationLevel = GetTokenLevel(token);
+
+                        Token tk = tokenSysten.GetToken(token);
+                        request.AuthenticationLevel = GetTokenLevel(tk);
                     }
                     else
                     {
@@ -155,10 +160,10 @@ namespace LogicReinc.WebServer.Controllers
     public interface ISecuritySettings
     {
         bool HasUserData { get; }
+        bool SendUserData { get; }
 
-        bool VerifyUser(string username, string password);
-        object GetUserData(string username);
-        int GetTokenLevel(string token);
+        bool VerifyUser(string username, string password, out object userData);
+        int GetTokenLevel(Token token);
     }
 }
 
