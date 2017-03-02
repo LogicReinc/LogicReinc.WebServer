@@ -21,6 +21,8 @@ namespace ExampleProject
 
         public bool HasUserData => true;
         public bool SendUserData => true;
+        public bool IsIPBoundToken => true;
+        public int TokenDuration => 3600;
 
         public bool VerifyUser(string username, string password, out object userData)
         {

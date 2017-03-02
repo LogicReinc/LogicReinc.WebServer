@@ -201,7 +201,7 @@ Content-Type: application/octet-stream
             Assert.AreEqual(Encoding.UTF8.GetBytes(section3Data).Length, fOut2.Length, "Malformed data");
         }
 
-        [TestMethod]
+        //[TestMethod]
         public void TestMultiPartStreamingSpeed()
         {
             for (int i = 0; i < 10000; i++)

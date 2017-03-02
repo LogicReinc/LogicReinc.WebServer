@@ -56,6 +56,8 @@ namespace LogicReinc.Web.Tests
         {
             public bool HasUserData => true;
             public bool SendUserData => false;
+            public bool IsIPBoundToken => true;
+            public int TokenDuration => 3600;
 
             public int GetTokenLevel(Token token)
             {
@@ -74,7 +76,7 @@ namespace LogicReinc.Web.Tests
 
             public bool VerifyUser(string username, string password, out object userData)
             {
-                userData = null;
+                userData = username;
                 if (username.ToLower() == "admin" && password == AdminPassword)
                     return true;
                 else if (OtherUsers.Contains(username.ToLower()))
@@ -147,7 +149,7 @@ namespace LogicReinc.Web.Tests
 
 
         //Keeps server online till debug stopped. Used for outside-VS testing.
-        [TestMethod]
+        //[TestMethod]
         public void HostTest()
         {
             while (true)

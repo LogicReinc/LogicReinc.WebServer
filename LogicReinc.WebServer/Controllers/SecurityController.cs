@@ -15,7 +15,7 @@ namespace LogicReinc.WebServer.Controllers
     public class SecurityController<SecSettings> : ControllerBase where SecSettings : ISecuritySettings
     {
         private static string unique = Guid.NewGuid().ToString();
-        private static TokenSystem tokenSysten = new TokenSystem();
+        private static TokenSystem tokenSysten = new TokenSystem();// Settings.TokenDuration);
 
         private static Dictionary<Type, SecSettings> settings = new Dictionary<Type, SecSettings>();
         public static SecSettings Settings
@@ -31,6 +31,7 @@ namespace LogicReinc.WebServer.Controllers
         
         private static string GenerateUnique(HttpRequest request)
         {
+            
             string addr = request.RemoteAddress;
             if (addr == "::1")
                 addr = "127.0.0.1";
@@ -161,6 +162,8 @@ namespace LogicReinc.WebServer.Controllers
     {
         bool HasUserData { get; }
         bool SendUserData { get; }
+        bool IsIPBoundToken { get; }
+        int TokenDuration { get; }
 
         bool VerifyUser(string username, string password, out object userData);
         int GetTokenLevel(Token token);
