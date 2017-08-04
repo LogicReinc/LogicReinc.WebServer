@@ -229,9 +229,9 @@ namespace LogicReinc.WebServer
                     req.Server = this;
 
                 Log("HandleRequest", $"{req.RemoteAddress}->{req.Url.Path}");
-                using (HttpRequest request = req)
-                {
 
+                HttpRequest request = req;
+                {
                     if (Routing.ExecuteConditionalPassthroughs(request))
                         return;
 
@@ -250,10 +250,10 @@ namespace LogicReinc.WebServer
                     //Routing
                     if (Routing.ExecuteConditional(request))
                         return;
-                    
+
                     if (Routing.ExecuteRouting(request))
                         return;
-                    
+
                     if (Routing.ExecuteController(request))
                         return;
 
@@ -264,6 +264,10 @@ namespace LogicReinc.WebServer
                     if (OnDefaultRequest != null && !request.IsClosed)
                         OnDefaultRequest(request);
                 }
+
+                if (!request.DisableAutoHandling)
+                    request.Dispose();
+            
             }
             catch(Exception ex)
             {
