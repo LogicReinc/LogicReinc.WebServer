@@ -95,6 +95,8 @@ namespace LogicReinc.WebServer.Components
                     
                     //Pre-Controller logic
                     request.Server.PreControllerCheck(request, call);
+                    if (request.IsClosed)
+                        return true;
 
                     //With descriptor
                     if (call.Descriptor != null)
