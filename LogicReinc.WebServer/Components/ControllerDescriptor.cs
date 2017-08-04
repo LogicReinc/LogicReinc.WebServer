@@ -36,7 +36,7 @@ namespace LogicReinc.WebServer.Components
                                         .Where(x => !IgnoreControllerMethodAttribute.HasAttribute(x)).ToList();
             foreach (MethodInfo m in ms)
             {
-                CallDescriptor desc = new CallDescriptor(m);
+                CallDescriptor desc = new CallDescriptor(this, m);
                 string name = m.Name.ToLower();
                 if (desc.Descriptor != null && !string.IsNullOrEmpty(desc.Descriptor.MethodName))
                     name = desc.Descriptor.MethodName;
@@ -344,6 +344,7 @@ namespace LogicReinc.WebServer.Components
 
         public class CallDescriptor
         {
+            public ControllerDescriptor Controller { get; set; }
             public MethodDescriptorAttribute Descriptor { get; set; }
             public CachingAttribute CacheHeader { get; set; }
             public JsonSerializerConfig JsonSerialization { get; set; }
@@ -352,8 +353,9 @@ namespace LogicReinc.WebServer.Components
             public MethodInfo Info { get; set; }
             public List<ParameterDescriptor> Parameters { get; set; }
 
-            public CallDescriptor(MethodInfo method)
+            public CallDescriptor(ControllerDescriptor controller, MethodInfo method)
             {
+                Controller = controller;
                 Descriptor = MethodDescriptorAttribute.GetDescriptor(method);
                 CacheHeader = CachingAttribute.GetAttribute(method);
                 TokenRequirements = RequiresTokenAttribute.GetAttribute(method);
