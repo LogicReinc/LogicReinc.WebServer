@@ -133,6 +133,7 @@ namespace LogicReinc.WebServer.Controllers
 
                         Token tk = tokenSysten.GetToken(token);
                         request.AuthenticationLevel = GetTokenLevel(tk);
+                        Settings.PrepareRequest(tk, request);
                     }
                     else
                     {
@@ -167,6 +168,8 @@ namespace LogicReinc.WebServer.Controllers
 
         bool VerifyUser(string username, string password, out object userData);
         int GetTokenLevel(Token token);
+
+        void PrepareRequest(Token token, HttpRequest request);
     }
 }
 

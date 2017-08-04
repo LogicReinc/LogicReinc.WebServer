@@ -115,8 +115,14 @@ namespace LogicReinc.WebServer.Components
                     try
                     {
                         if (call.TokenRequirements != null)
+                        {
                             if (!request.Authenticated || call.TokenRequirements.LevelRequired > request.AuthenticationLevel)
                                 throw new ForbiddenException("You don't have permission to access this API method");
+                            if (call.TokenRequirements.RequestAttributes != null && call.TokenRequirements.RequestAttributes.Length > 0)
+                                foreach (string attr in call.TokenRequirements.RequestAttributes)
+                                    if (!request.Attributes.Contains(attr))
+                                        throw new ForbiddenException("You don't have permission to access this API method at this moment");
+                        }
                         //Caching
                         if (call.CacheHeader != null)
                         {

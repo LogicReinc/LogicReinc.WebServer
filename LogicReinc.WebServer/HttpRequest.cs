@@ -2,6 +2,7 @@
 using LogicReinc.Parsing;
 using LogicReinc.WebServer.Components;
 using LogicReinc.WebServer.Enums;
+using LogicReinc.WebServer.Exceptions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -34,6 +35,8 @@ namespace LogicReinc.WebServer
         public object TokenData { get; set; }
         public bool Authenticated { get; set; }
         public int AuthenticationLevel { get; set; }
+
+        public List<string> Attributes { get; set; } = new List<string>();
 
         public bool DisableAutoHandling { get; set; }
 
@@ -253,7 +256,30 @@ namespace LogicReinc.WebServer
         {
             Write(Encoding.UTF8.GetBytes(data));
         }
+        public void Write(Stream stream)
+        {
+            byte[] buffer = new byte[4096];
+            int read = 0;
+            using (Stream str = stream)
+                while ((read = str.Read(buffer, 0, buffer.Length)) > 0)
+                    Response.OutputStream.Write(buffer, 0, read);
+        }
 
+        public void File(string path)
+        {
+            FileInfo f = new FileInfo(path);
+            if (!f.Exists)
+                throw new NotFoundException("File could not be found");
+
+            Response.AddHeader("Content-Length", f.Length.ToString());
+
+            byte[] buffer = new byte[4096];
+            int read = 0;
+            using (FileStream str = new FileStream(path.ToString(), FileMode.Open))
+                while ((read = str.Read(buffer, 0, buffer.Length)) > 0)
+                    Response.OutputStream.Write(buffer, 0, read);
+            Close();
+        }
 
         public void Stream(Stream stream)
         {

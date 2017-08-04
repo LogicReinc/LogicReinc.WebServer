@@ -8,6 +8,7 @@
     {
         public int LevelRequired { get; private set; }
         public string DataRequired { get; set; }
+        public string[] RequestAttributes { get; private set; }
 
         public RequiresTokenAttribute(int levelRequirement = 0)
         {
@@ -17,6 +18,18 @@
         public RequiresTokenAttribute(string dataRequirement)
         {
             this.DataRequired = dataRequirement;
+        }
+
+        public RequiresTokenAttribute(int level, params string[] requiredTokens)
+        {
+            LevelRequired = level;
+            RequestAttributes = requiredTokens;
+        }
+
+        public RequiresTokenAttribute(string[] requiresTokens)
+        {
+            LevelRequired = 0;
+            RequestAttributes = requiresTokens;
         }
 
         public static RequiresTokenAttribute GetAttribute(MethodInfo info)

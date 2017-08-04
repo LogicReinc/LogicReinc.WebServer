@@ -48,5 +48,10 @@ namespace ExampleProject
                 return 5;
             return 0;
         }
+
+        public void PrepareRequest(Token token, HttpRequest request)
+        {
+
+        }
     }
 }

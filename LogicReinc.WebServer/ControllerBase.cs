@@ -43,6 +43,8 @@ namespace LogicReinc.WebServer
         public void Write(byte[] data) => Request.Write(data);
         public void Write(object data, BodyType type = BodyType.JSON) => Request.Write(data, type);
 
+        public void File(string path) => Request.File(path);
+
         public void Stream(Stream stream) => Request.Stream(stream);
 
         public void Redirect(string newUrl) => Request.Redirect(newUrl);

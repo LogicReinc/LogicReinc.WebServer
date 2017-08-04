@@ -83,6 +83,11 @@ namespace LogicReinc.Web.Tests
                     return true;
                 return false;
             }
+
+            public void PrepareRequest(Token token, HttpRequest request)
+            {
+
+            }
         }
 
         //[domain]/Controller/*
