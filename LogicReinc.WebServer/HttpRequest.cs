@@ -35,11 +35,12 @@ namespace LogicReinc.WebServer
         public bool Authenticated { get; set; }
         public int AuthenticationLevel { get; set; }
 
+        public bool DisableAutoHandling { get; set; }
 
         public  HttpUrl Url { get; private set; }
 
         private Dictionary<string, string> _parameters;
-        public Dictionary<string, string> Parameters
+        public Dictionary<string, string> Parameters 
         {
             get
             {
@@ -207,14 +208,12 @@ namespace LogicReinc.WebServer
             this.Response.StatusCode = code;
             this.Close();
         }
-
         public void ThrowCode(int code, byte[] data)
         {
             this.Response.StatusCode = code;
             this.Response.OutputStream.Write(data, 0, data.Length);
             this.Close();
         }
-        
         public void ThrowCode(int code, string data)
         {
             this.Response.StatusCode = code;

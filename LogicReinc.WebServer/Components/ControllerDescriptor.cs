@@ -58,10 +58,14 @@ namespace LogicReinc.WebServer.Components
 
         public bool ExecuteController(string methodName, HttpRequest request)
         {
+
             string mn = methodName.ToLower();
 
             if (Calls.ContainsKey(methodName))
             {
+
+                if (request.IsClosed)
+                    return true;
 
                 BodyType responseType = Server.DefaultResponseType;
 
@@ -88,6 +92,9 @@ namespace LogicReinc.WebServer.Components
                 try
                 {
                     CallDescriptor call = Calls[methodName];
+                    
+                    //Pre-Controller logic
+                    request.Server.PreControllerCheck(request, call);
 
                     //With descriptor
                     if (call.Descriptor != null)
@@ -132,6 +139,8 @@ namespace LogicReinc.WebServer.Components
 
                         //Handling
                         result = call.Info.Invoke(GetInstance(request), paras.ToArray());
+                        if (request.DisableAutoHandling)
+                            return true;
                     }
                     catch (TargetInvocationException tx)
                     {

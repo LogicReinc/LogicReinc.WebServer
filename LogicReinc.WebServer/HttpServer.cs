@@ -11,9 +11,11 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static LogicReinc.WebServer.Components.ControllerDescriptor;
 
 namespace LogicReinc.WebServer
 {
+    public delegate void OnControllerRequestDelegate(HttpRequest request, CallDescriptor call);
     public delegate void OnRequestDelegate(HttpRequest request);
     public delegate void OnLogDelegate(string location, string log);
     public delegate void OnExceptionDelegate(string location, Exception ex);
@@ -49,6 +51,7 @@ namespace LogicReinc.WebServer
         public event OnRequestDelegate OnDefaultRequest;
         public event OnRequestDelegate OnRequest;
         public event OnRequestDelegate OnRequestPost;
+        public event OnControllerRequestDelegate OnPreController;
         public event OnLogDelegate OnLog;
         public event OnExceptionDelegate OnException;
 
@@ -250,7 +253,7 @@ namespace LogicReinc.WebServer
                     
                     if (Routing.ExecuteRouting(request))
                         return;
-
+                    
                     if (Routing.ExecuteController(request))
                         return;
 
@@ -290,6 +293,13 @@ namespace LogicReinc.WebServer
         {
             if (OnLog != null)
                 OnLog(location, msg);
+        }
+
+        //Event Calls
+        internal void PreControllerCheck(HttpRequest request, CallDescriptor desc)
+        {
+            if (OnPreController != null)
+                OnPreController(request, desc);
         }
     }
 }
