@@ -264,9 +264,6 @@ namespace LogicReinc.WebServer
                     if (OnDefaultRequest != null && !request.IsClosed)
                         OnDefaultRequest(request);
                 }
-
-                if (!request.DisableAutoHandling)
-                    request.Dispose();
             
             }
             catch(Exception ex)
@@ -279,8 +276,12 @@ namespace LogicReinc.WebServer
             }
             finally
             {
-                if(!req.IsClosed)
-                    Try.Action(() => req.Close(), null);
+                if (!req.IsClosed && !req.DisableAutoHandling)
+                    try
+                    {
+                        req.Close();
+                    }
+                    catch { }
             }
         }
 
