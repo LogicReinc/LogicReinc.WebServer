@@ -32,14 +32,6 @@ namespace LogicReinc.WebServer.Attributes
         {
             if (parameters != null)
                 Parameters = parameters.ToList();
-            /*
-            PostParameter = postParameter;
-            Parameters = parameters.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-            RequestType = bodyType;
-            ResponseType = responseType;
-            RazorView = razorView;
-            if (razorView != "")
-                responseType = BodyType.Razor;*/
         }
 
         public static MethodDescriptorAttribute GetDescriptor(MethodInfo method)

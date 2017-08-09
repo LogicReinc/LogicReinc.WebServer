@@ -353,6 +353,8 @@ namespace LogicReinc.WebServer.Components
             public MethodInfo Info { get; set; }
             public List<ParameterDescriptor> Parameters { get; set; }
 
+            public Dictionary<Type, Attribute> Attributes { get; set; } = new Dictionary<Type, Attribute>();
+
             public CallDescriptor(ControllerDescriptor controller, MethodInfo method)
             {
                 Controller = controller;
@@ -362,6 +364,20 @@ namespace LogicReinc.WebServer.Components
                 Info = method;
                 Parameters = Info.GetParameters().Select(x=>new ParameterDescriptor(x)).ToList();
                 JsonSerialization = JsonSerializerAttribute.GetAttribute(method);
+                Attributes = Info.GetCustomAttributes().ToDictionary(x => x.GetType(), y => y);
+            }
+
+            public bool HasAttribute(Type attribute)
+            {
+                return Attributes.ContainsKey(attribute);
+            }
+
+            public T GetAttribute<T>() where T : Attribute
+            {
+                Type t = typeof(T);
+                if (!Attributes.ContainsKey(t))
+                    return null;
+                return (T)Attributes[t];
             }
         }
 
