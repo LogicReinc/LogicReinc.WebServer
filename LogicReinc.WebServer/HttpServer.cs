@@ -88,7 +88,7 @@ namespace LogicReinc.WebServer
         {
             Routing = new RoutingCollection(this);
             Port = port;
-            SslPort = port;
+            SslPort = sslPort;
         }
 
         //Routing
