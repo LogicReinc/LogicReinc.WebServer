@@ -32,6 +32,9 @@ namespace LogicReinc.WebServer
         //Public
         public bool Active { get; private set; }
 
+        public string ReverseProxy { get; set; }
+        public bool AllowIPForward { get; set; }
+
         public int SslPort { get; private set; } = 0;
         public int Port { get; private set; } = 80;
 

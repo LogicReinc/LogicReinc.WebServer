@@ -28,8 +28,36 @@ namespace LogicReinc.WebServer
 
         public long ContentLength => Request.ContentLength64;
 
+        private string _remoteIp = null;
         public string LocalAddress => Request.LocalEndPoint.Address.ToString();
-        public string RemoteAddress => Request.RemoteEndPoint.Address.ToString();
+        public string RemoteAddress
+        {
+            get
+            {
+                if (_remoteIp == null)
+                {
+                    string currentIp = Request.RemoteEndPoint.Address.ToString();
+
+                    if (Server.AllowIPForward && Server.ReverseProxy != null && currentIp == Server.ReverseProxy)
+                    {
+                        string realIp = GetHeader("X-Real-IP") ?? "";
+                        string forwardedIp = GetHeader("X-Forwarded-For")?.Split(',').LastOrDefault()?.Trim() ?? "";
+                        if (forwardedIp != "")
+                        {
+                            _remoteIp = forwardedIp;
+                            return _remoteIp;
+                        }
+                        if (realIp != "")
+                        {
+                            _remoteIp = realIp;
+                            return _remoteIp;
+                        }
+                    }
+                    _remoteIp = currentIp;
+                }
+                return _remoteIp;
+            }
+        }
 
         public string Token { get; set; }
         public object TokenData { get; set; }
