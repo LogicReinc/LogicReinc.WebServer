@@ -195,6 +195,9 @@ namespace LogicReinc.WebServer
         {
             Active = false;
 
+            if (ThreadPool != null)
+                ThreadPool.SetWorkerCount(0);
+
             if (_listener == null)
                 _listener.Close();
         }
