@@ -31,7 +31,7 @@ namespace LogicReinc.WebServer
         protected void Init()
         {
             Server.Routing.Clear();
-            
+
             RegisterFiles();
             RegisterRoutes();
             RegisterControllers();
@@ -51,6 +51,7 @@ namespace LogicReinc.WebServer
             {
                 Init();
                 Server.Start();
+                Active = true;
             }
         }
 
