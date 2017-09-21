@@ -42,7 +42,19 @@ namespace LogicReinc.WebServer
 
         public List<string> Bindings { get; } = new List<string>();
 
-        public RazorCache RazorCache { get; private set; } = new RazorCache();
+        private RazorCache _razorCacheInstance = null;
+        public RazorCache RazorCache {
+            get
+            {
+                if (_razorCacheInstance == null)
+                    _razorCacheInstance = new RazorCache();
+                return _razorCacheInstance;
+            }
+            private set
+            {
+                _razorCacheInstance = value;
+            }
+        }
         public FileCache FileCache { get; private set; } = new FileCache();
 
         public BodyType DefaultRequestType { get; set; } = BodyType.JSON;
