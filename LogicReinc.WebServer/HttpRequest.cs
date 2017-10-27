@@ -361,7 +361,7 @@ namespace LogicReinc.WebServer
             catch(Exception ex)
             {
                 //Connection closed
-                Console.WriteLine(ex.Message);
+                System.Console.WriteLine(ex.Message);
             }
             Close();
         }

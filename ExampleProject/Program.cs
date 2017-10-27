@@ -18,10 +18,10 @@ namespace ExampleProject
             server.Server.OnException += (m, x) =>
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"[{DateTime.Now.ToString()}] EXCEPTION\n{x}\n{m}\n{x.Message}");
+                System.Console.WriteLine($"[{DateTime.Now.ToString()}] EXCEPTION\n{x}\n{m}\n{x.Message}");
                 Console.ResetColor();
             };
-            server.Server.OnLog += (loc, log) => Console.WriteLine($"[{DateTime.Now.ToString()}] - {loc}: {log}");
+            server.Server.OnLog += (loc, log) => System.Console.WriteLine($"[{DateTime.Now.ToString()}] - {loc}: {log}");
 
 
             server.Start();

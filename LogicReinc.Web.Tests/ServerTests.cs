@@ -284,7 +284,7 @@ namespace LogicReinc.Web.Tests
                 Assert.AreEqual(SimpleControllerData, data.Result.StringProperty, $"Received data incorrect, found {data.Result.StringProperty}");
                 count++;
             }
-            Console.WriteLine(count);
+            System.Console.WriteLine(count);
         }
 
 
@@ -299,7 +299,7 @@ namespace LogicReinc.Web.Tests
                 tasks.Add(Task.Run(() =>
                 client.DownloadString($"{Address}/controller/Test")));
             }
-            Console.WriteLine(cap);
+            System.Console.WriteLine(cap);
             Task.WaitAll(tasks.ToArray());
         }
 
@@ -314,7 +314,7 @@ namespace LogicReinc.Web.Tests
                 tasks.Add(Task.Run(() => 
                 client.DownloadString($"{Address}/controller/TestAPIResponseObj")));
             }
-            Console.WriteLine(cap);
+            System.Console.WriteLine(cap);
             Task.WaitAll(tasks.ToArray());
         }
 
@@ -335,11 +335,11 @@ namespace LogicReinc.Web.Tests
                     {
                         string res = client.DownloadString($"{Address}/controller/TestSleep?wait=1000");
                         wClient.Stop();
-                        Console.WriteLine($"Client callback after {wClient.ElapsedMilliseconds}");
+                        System.Console.WriteLine($"Client callback after {wClient.ElapsedMilliseconds}");
                         return res;
                     }));
                 }
-                Console.WriteLine(cap);
+                System.Console.WriteLine(cap);
                 Task.WaitAll(tasks.ToArray());
             }
             Thread.Sleep(3000);
@@ -354,16 +354,16 @@ namespace LogicReinc.Web.Tests
                     {
                         string res = client.DownloadString($"{Address}/controller/TestSleep?wait=1000");
                         wClient.Stop();
-                        Console.WriteLine($"Client callback after {wClient.ElapsedMilliseconds}");
+                        System.Console.WriteLine($"Client callback after {wClient.ElapsedMilliseconds}");
                         return res;
                     }));
                 }
-                Console.WriteLine(cap);
+                System.Console.WriteLine(cap);
                 Task.WaitAll(tasks.ToArray());
             }
 
             w.Stop();
-            Console.WriteLine($"Total completion in: {w.ElapsedMilliseconds}");
+            System.Console.WriteLine($"Total completion in: {w.ElapsedMilliseconds}");
         }
 
 

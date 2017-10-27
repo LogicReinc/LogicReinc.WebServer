@@ -55,12 +55,12 @@ Content-Type: text/html
 
             foreach(MultiPartSection section in parts.Sections)
             {
-                Console.WriteLine("New Section");
-                Console.WriteLine($"FileName: {section.FileName}");
-                Console.WriteLine($"Name: {section.Name}");
-                Console.WriteLine($"Content-Type: {section.ContentType}");
-                Console.WriteLine($"Content: {section.DataAsString}");
-                Console.WriteLine("-------------------");
+                System.Console.WriteLine("New Section");
+                System.Console.WriteLine($"FileName: {section.FileName}");
+                System.Console.WriteLine($"Name: {section.Name}");
+                System.Console.WriteLine($"Content-Type: {section.ContentType}");
+                System.Console.WriteLine($"Content: {section.DataAsString}");
+                System.Console.WriteLine("-------------------");
             }
 
 
@@ -140,13 +140,13 @@ Content-Type: application/octet-stream
 
             foreach (MultiPartSection section in sections)
             {
-                Console.WriteLine("New Section");
-                Console.WriteLine($"FileName: {section.FileName}");
-                Console.WriteLine($"Name: {section.Name}");
-                Console.WriteLine($"Content-Type: {section.ContentType}");
-                Console.WriteLine($"Content: {((!section.Streamed) ? section.DataAsString : "")}");
-                Console.WriteLine($"Streamed: {section.Streamed}");
-                Console.WriteLine("-------------------");
+                System.Console.WriteLine("New Section");
+                System.Console.WriteLine($"FileName: {section.FileName}");
+                System.Console.WriteLine($"Name: {section.Name}");
+                System.Console.WriteLine($"Content-Type: {section.ContentType}");
+                System.Console.WriteLine($"Content: {((!section.Streamed) ? section.DataAsString : "")}");
+                System.Console.WriteLine($"Streamed: {section.Streamed}");
+                System.Console.WriteLine("-------------------");
             }
         }
 
@@ -185,13 +185,13 @@ Content-Type: application/octet-stream
 
             foreach (MultiPartSection section in sections)
             {
-                Console.WriteLine("New Section");
-                Console.WriteLine($"FileName: {section.FileName}");
-                Console.WriteLine($"Name: {section.Name}");
-                Console.WriteLine($"Content-Type: {section.ContentType}");
-                Console.WriteLine($"Content: {((!section.Streamed) ? section.DataAsString : "")}");
-                Console.WriteLine($"Streamed: {section.Streamed}");
-                Console.WriteLine("-------------------");
+                System.Console.WriteLine("New Section");
+                System.Console.WriteLine($"FileName: {section.FileName}");
+                System.Console.WriteLine($"Name: {section.Name}");
+                System.Console.WriteLine($"Content-Type: {section.ContentType}");
+                System.Console.WriteLine($"Content: {((!section.Streamed) ? section.DataAsString : "")}");
+                System.Console.WriteLine($"Streamed: {section.Streamed}");
+                System.Console.WriteLine("-------------------");
             }
 
 

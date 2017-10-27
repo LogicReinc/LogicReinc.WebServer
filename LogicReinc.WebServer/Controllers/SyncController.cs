@@ -128,7 +128,7 @@ namespace LogicReinc.WebSercer.Controllers
                 foreach (ControllerRoute tkv in GetControllers())
                 {
                     string controllerPath = tkv.Path;
-                    //Console.WriteLine(controllerPath);
+                    //System.Console.WriteLine(controllerPath);
                     ControllerDescriptor template = tkv.Controller;
 
                     JSBObject jsController = new JSBObject();
