@@ -5,14 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LogicReinc" Version="1.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
     <PackageReference Include="RazorTemplates" Version="1.2.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="LogicReinc">
-      <HintPath>..\..\..\..\Documents\Git\Frameworks\LogicReinc\LogicReinc\bin\Debug\netstandard2.0\LogicReinc.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>
