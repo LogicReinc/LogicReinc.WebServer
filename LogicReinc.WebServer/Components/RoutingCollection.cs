@@ -6,13 +6,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LogicReinc.Extensions;
+using LogicReinc.WebServer.Components.WebSocket;
+using LogicReinc.WebServer.WebSocket;
 
 namespace LogicReinc.WebServer.Components
 {
     public class RoutingCollection
     {
-        public HttpServer Server { get; private set; 
-}
+        public HttpServer Server { get; private set; }
+
         public RoutingCollection(HttpServer server)
         {
             Server = server;
@@ -23,6 +25,7 @@ namespace LogicReinc.WebServer.Components
         private Dictionary<string, ControllerDescriptor> Controllers { get; } = new Dictionary<string, ControllerDescriptor>();
         private Dictionary<Func<HttpRequest, bool>, Action<HttpRequest>> ConditionalRouting { get; } = new Dictionary<Func<HttpRequest, bool>, Action<HttpRequest>>();
         private Dictionary<Func<HttpRequest, bool>, HttpServer> ConditionalPassthroughs { get; } = new Dictionary<Func<HttpRequest, bool>, HttpServer>();
+        private Dictionary<string, WebSocketDescriptor> WebSockets { get; } = new Dictionary<string, WebSocketDescriptor>();
 
         public List<ControllerRoute> GetControllers() => Controllers.Select(x => new ControllerRoute(x.Key, x.Value)).ToList();
 
@@ -40,6 +43,20 @@ namespace LogicReinc.WebServer.Components
             ControllerDescriptor descriptor = ControllerDescriptor.GetTemplate<T>(Server, apiWrapped);
             descriptor.Register();
             Controllers.Add(url.ToLower(), descriptor);
+        }
+        public WebSocketClientContainer<T> AddWebSocket<T>(string url, bool requiresToken = false, int level = 0) where T : WebSocketClient, new()
+        {
+            WebSocketDescriptor descriptor = new WebSocketDescriptor(Server, new WebSocketClientContainer<T>())
+            {
+                RequiresToken = requiresToken,
+                TokenLevel = level
+            };
+            WebSockets.Add(url.ToLower(), descriptor);
+            return (WebSocketClientContainer<T>)descriptor.Container;
+        }
+        public void AddWebSocket(string url, WebSocketDescriptor descriptor)
+        {
+            WebSockets.Add(url.ToLower(), descriptor);
         }
         public void AddRoute(string url, ControllerDescriptor descriptor)
         {
@@ -63,6 +80,7 @@ namespace LogicReinc.WebServer.Components
             Controllers.Clear();
             ConditionalRouting.Clear();
             ConditionalPassthroughs.Clear();
+            WebSockets.Clear();
         }
 
 
@@ -112,7 +130,10 @@ namespace LogicReinc.WebServer.Components
         public bool ExecuteRouting(HttpRequest request)
         {
             string lPath = request.Url.Path.ToLower();
-            var route = Routings.FirstOrDefault(x => x.Key == lPath).Value;
+
+            if (!Routings.ContainsKey(lPath))
+                return false;
+            var route = Routings[lPath];
 
             if (route != null)
             {
@@ -147,7 +168,16 @@ namespace LogicReinc.WebServer.Components
 
             return false;
         }
-
+        public bool ExecuteWebSocket(HttpRequest request)
+        {
+            string lPath = request.Url.Path.ToLower();
+            if (WebSockets.ContainsKey(lPath))
+            {
+                WebSockets[lPath].HandleRequest(request);
+                return true;
+            }
+            return false;
+        }
 
         public class Route
         {

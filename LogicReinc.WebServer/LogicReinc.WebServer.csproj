@@ -2,6 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Company>LogicReinc</Company>
+    <Description>A framework that allows you to quickly build webservers or embed webservers within an application. Easy Web API development, MVC support, (optional) inbuild security on api-method level, Automatic javascript api library generation, WebSocket support with inbuild security.</Description>
+    <Copyright>LogicReinc</Copyright>
+    <PackageLicenseUrl>https://github.com/LogicReinc/LogicReinc.WebServer/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/LogicReinc/LogicReinc.WebServer</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/LogicReinc/LogicReinc.WebServer</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
+    <PackageTags>WebServer, LogicReinc, API, WebAPI, Web, Server, Http, Https, Host, MVC, WebSocket</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>Added WebSocket support</PackageReleaseNotes>
+    <Version>1.0.2</Version>
+    <Authors>LogicReinc</Authors>
+    <AssemblyVersion>1.0.2.0</AssemblyVersion>
+    <FileVersion>1.0.2.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

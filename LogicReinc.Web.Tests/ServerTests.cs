@@ -16,6 +16,10 @@ using LogicReinc.WebSercer.Controllers;
 using LogicReinc.WebServer.Controllers;
 using LogicReinc.WebServer.Exceptions;
 using LogicReinc.Security.TokenSystem;
+using System.Net.WebSockets;
+using System.Text;
+using LogicReinc.WebServer.WebSocket;
+using System.Linq;
 
 namespace LogicReinc.Web.Tests
 {
@@ -24,6 +28,7 @@ namespace LogicReinc.Web.Tests
     {
         static HttpServer server;
         static WebClient client = new WebClient();
+        static WebSocketClientContainer<WebSocketTestClient> testClients = null;
 
         public const int Port = 9990;
         public static string Address = $"http://localhost:{Port}";
@@ -43,12 +48,15 @@ namespace LogicReinc.Web.Tests
         public static void Init(TestContext context)
         {
             server = new HttpServer(Port);
+            server.OnLog += (l, m) => System.Console.WriteLine(l + "->" + m); 
             server.WorkerCount = 15;
             server.AddRoute("/", (x) => x.Write(SimpleRouteData));
             server.AddRoute((x) => x.Parameters.ContainsKey("triggerConditional"), (r) => r.Write(ConditionalRouteData));
             server.AddRoute<TestController>("/controller");
             server.AddRoute<SyncController>("/sync");
             server.AddRoute<SecurityController<SecuritySettings>>("/security");
+            testClients = server.AddWebSocket<WebSocketTestClient>("/websocket");
+            server.AddWebSocket<WebSocketAdminClient>("/adminsocket", true, 5);
             server.Start();
         }
 
@@ -149,6 +157,38 @@ namespace LogicReinc.Web.Tests
             {
                 public string StringProperty { get; set; }
                 public int IntProperty { get; set; }
+            }
+        }
+
+        public class WebSocketTestClient : WebSocketClient
+        {
+            public override void HandleBinary(byte[] data)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void HandleText(string msg)
+            {
+                if (msg == "Ping")
+                    Send("Pong");
+                if (msg == "DisconnectMe")
+                    Disconnect();
+            }
+        }
+        public class WebSocketAdminClient : WebSocketClient
+        {
+            public override void HandleBinary(byte[] data)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void HandleText(string msg)
+            {
+                if (msg == "Ping")
+                    Send("Pong");
+                if (msg.StartsWith("Broadcast:"))
+                    testClients.Broadcast(msg.Substring("Broadcast:".Length));
+
             }
         }
 
@@ -323,7 +363,7 @@ namespace LogicReinc.Web.Tests
         {
             Stopwatch w = new Stopwatch(); w.Start();
             server.IOHandling = WebServer.Enums.IOHandlingType.WorkerPool; //Default = WorkerPool
-            int cap = 15;
+            int cap = 25;
             for (int volley = 0; volley < 10; volley++)
             {
                 List<Task<string>> tasks = new List<Task<string>>();
@@ -366,6 +406,186 @@ namespace LogicReinc.Web.Tests
             System.Console.WriteLine($"Total completion in: {w.ElapsedMilliseconds}");
         }
 
+
+        //Websocket
+        [TestMethod]
+        public void WebsocketConnection()
+        {
+            Task.Run(async () =>
+            {
+                ClientWebSocket socket = new ClientWebSocket();
+                await socket.ConnectAsync(new Uri("ws://localhost:9990/websocket"), CancellationToken.None);
+                await socket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("Ping")), WebSocketMessageType.Text, true, CancellationToken.None);
+                byte[] buffer = new byte[1024];
+                WebSocketReceiveResult result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                string resultString = Encoding.UTF8.GetString(buffer, 0, result.Count);
+
+                Assert.AreEqual(resultString, "Pong");
+            }).Wait();
+        }
+        [TestMethod]
+        public void WebsocketConnectionHandling()
+        {
+            Task.Run(async () =>
+            {
+                ClientWebSocket socket = new ClientWebSocket();
+                await socket.ConnectAsync(new Uri("ws://localhost:9990/websocket"), CancellationToken.None);
+
+                Assert.AreEqual(1, testClients.Clients.Length);
+                testClients.Clients[0].Disconnected += () =>
+                {
+                    
+                };
+
+
+                await socket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("Ping")), WebSocketMessageType.Text, true, CancellationToken.None);
+                byte[] buffer = new byte[1024];
+                WebSocketReceiveResult result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                string resultString = Encoding.UTF8.GetString(buffer, 0, result.Count);
+
+                Assert.AreEqual(resultString, "Pong");
+
+                socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                Thread.Sleep(2000);
+                Assert.AreEqual(0, testClients.Clients.Length);
+
+                socket = new ClientWebSocket();
+                await socket.ConnectAsync(new Uri("ws://localhost:9990/websocket"), CancellationToken.None);
+
+                Assert.AreEqual(1, testClients.Clients.Length);
+
+                await socket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("DisconnectMe")), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                Thread.Sleep(100);
+                Assert.AreEqual(0, testClients.Clients.Length);
+            }).Wait();
+        }
+        [TestMethod]
+        public void WebsocketMulticlient()
+        {
+            Task.Run(async () =>
+            {
+                List<Task> tasks = new List<Task>();
+                int ccount = 1000;
+                for(int i = 0; i < ccount; i++)
+                {
+                    int a = i;
+                    tasks.Add(Task.Run(async () =>
+                    {
+                        Stopwatch watch = new Stopwatch();
+                        watch.Start();
+
+                        byte[] buffer = new byte[1024];
+                        ClientWebSocket socket = new ClientWebSocket();
+                        await socket.ConnectAsync(new Uri("ws://localhost:9990/websocket"), CancellationToken.None);
+
+
+                       
+                        for (int x = 0; x < 5; x++)
+                        {
+                            await socket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("Ping")), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                            WebSocketReceiveResult result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                            string resultString = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                            Assert.AreEqual(resultString, "Pong");
+                            System.Console.WriteLine(a.ToString() + " - " + x.ToString());
+                        }
+
+                        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+
+
+                        watch.Stop();
+                        System.Console.WriteLine("Task(" + a.ToString() + "): " + watch.ElapsedMilliseconds.ToString());
+                    }));
+                }
+
+                try
+                {
+                    Task.WaitAll(tasks.ToArray());
+
+
+                }
+                catch(Exception ex)
+                {
+                    int s = tasks.Where(x => x.IsFaulted).Count();
+                    System.Console.WriteLine("Failed:" + s.ToString());
+                    throw new Exception("Failed for " + s.ToString() + " tasks out of " + ccount.ToString());
+                }
+                Assert.AreEqual(0, testClients.Clients.Length);
+            }).Wait();
+        }
+        [TestMethod]
+        public void WebSocketAuthenticated()
+        {
+            Task.Run(async () =>
+            {
+
+                string data = client.UploadString($"{Address}/security/GetToken", JsonConvert.SerializeObject(new SecurityUser()
+                {
+                    Username = AdminUsername,
+                    Password = AdminPassword
+                }));
+                APIWrap<Token>  tokenResult = JsonConvert.DeserializeObject<APIWrap<Token>>(data);
+
+                bool didSuccess = false;
+                bool didCrash = false;
+                try
+                {
+                    ClientWebSocket socket = new ClientWebSocket();
+                    await socket.ConnectAsync(new Uri("ws://localhost:9990/adminsocket"), CancellationToken.None);
+                    await socket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("Ping")), WebSocketMessageType.Text, true, CancellationToken.None);
+                    byte[] buffer = new byte[1024];
+                    WebSocketReceiveResult result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    string resp = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    didSuccess = true;
+                }
+                catch(Exception ex)
+                {
+                    didCrash = true;
+                }
+
+                Assert.IsTrue(!didSuccess && didCrash);
+
+
+                ClientWebSocket socket2 = new ClientWebSocket();
+                await socket2.ConnectAsync(new Uri("ws://localhost:9990/adminsocket?t=" + tokenResult.Result.AccessToken), CancellationToken.None);
+                await socket2.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("Ping")), WebSocketMessageType.Text, true, CancellationToken.None);
+                byte[] buffer2 = new byte[1024];
+                WebSocketReceiveResult result2 = await socket2.ReceiveAsync(new ArraySegment<byte>(buffer2), CancellationToken.None);
+                string resultString = Encoding.UTF8.GetString(buffer2, 0, result2.Count);
+
+                Assert.AreEqual(resultString, "Pong");
+            }).Wait();
+        }
+
+        [TestMethod]
+        public void WebsocketBroadcast()
+        {
+            Task.Run(async () =>
+            {
+
+                string data = client.UploadString($"{Address}/security/GetToken", JsonConvert.SerializeObject(new SecurityUser()
+                {
+                    Username = AdminUsername,
+                    Password = AdminPassword
+                }));
+                APIWrap<Token> tokenResult = JsonConvert.DeserializeObject<APIWrap<Token>>(data);
+
+
+                ClientWebSocket socket = new ClientWebSocket();
+                await socket.ConnectAsync(new Uri("ws://localhost:9990/websocket"), CancellationToken.None);
+               
+                ClientWebSocket socket2 = new ClientWebSocket();
+                await socket2.ConnectAsync(new Uri("ws://localhost:9990/adminsocket?t=" + tokenResult.Result.AccessToken), CancellationToken.None);
+                await socket2.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("Broadcast:AdminPing")), WebSocketMessageType.Text, true, CancellationToken.None);
+
+
+                byte[] buffer = new byte[1024];
+                WebSocketReceiveResult result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                string resp = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                Assert.AreEqual(resp, "AdminPing");
+            }).Wait();
+        }
 
     }
 }

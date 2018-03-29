@@ -18,6 +18,7 @@ namespace LogicReinc.WebServer
 {
     public class HttpRequest : IDisposable
     {
+        internal bool ReadLock { get; set; }
         public bool IsClosed { get; private set; }
         public HttpServer Server { get; set; }
 
@@ -100,6 +101,8 @@ namespace LogicReinc.WebServer
         {
             get
             {
+                if (ReadLock)
+                    return null;
                 if (_data == null)
                 {
                     byte[] buffer = new byte[4096];
@@ -120,6 +123,9 @@ namespace LogicReinc.WebServer
         {
             get
             {
+                if (ReadLock)
+                    return null;
+
                 if (_dataBase64 == null)
                     _dataBase64 = Convert.FromBase64String(DataString);
                 return _dataBase64;
@@ -131,7 +137,10 @@ namespace LogicReinc.WebServer
         {
             get
             {
-                if(_dataString == null)
+                if (ReadLock)
+                    return null;
+
+                if (_dataString == null)
                 {
                     using (StreamReader reader = new StreamReader(Request.InputStream))
                         _dataString = reader.ReadToEnd();

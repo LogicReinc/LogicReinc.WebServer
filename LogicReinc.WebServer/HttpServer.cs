@@ -1,7 +1,9 @@
 ﻿using LogicReinc.SyntaxSugar;
 using LogicReinc.Threading;
 using LogicReinc.WebServer.Components;
+using LogicReinc.WebServer.Components.WebSocket;
 using LogicReinc.WebServer.Enums;
+using LogicReinc.WebServer.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,9 +40,12 @@ namespace LogicReinc.WebServer
         public int SslPort { get; private set; } = 0;
         public int Port { get; private set; } = 80;
 
+        public bool AllowWebSocketProtocol { get; set; } = false;
+
         public bool Debug { get; set; } = false;
 
         public List<string> Bindings { get; } = new List<string>();
+
 
         private RazorCache _razorCacheInstance = null;
         public RazorCache RazorCache {
@@ -155,6 +160,18 @@ namespace LogicReinc.WebServer
         {
             Routing.AddRoute(url, descriptor);
         }
+        //Route: WebSocket
+        public WebSocketClientContainer<T> AddWebSocket<T>(string url, bool requiresToken = false, int level = 0) where T: WebSocketClient, new()
+        {
+            AllowWebSocketProtocol = true;
+            return Routing.AddWebSocket<T>(url,requiresToken, level);
+        }
+        public void AddWebSocket(string url, WebSocketDescriptor descriptor)
+        {
+            AllowWebSocketProtocol = true;
+            Routing.AddWebSocket(url, descriptor);
+        }
+
         //Route: Conditional
         public void AddRoute(Func<HttpRequest, bool> condition, Action<HttpRequest> action)
         {
@@ -181,9 +198,17 @@ namespace LogicReinc.WebServer
                 _listener = new HttpListener();
 
                 if (SslPort != 0)
+                {
                     _listener.Prefixes.Add($"https://*:{SslPort}/");
+                    if (AllowWebSocketProtocol)
+                        ;// _listener.Prefixes.Add($"wss://*:{Port}/");
+                }
                 if (Port != 0)
+                {
                     _listener.Prefixes.Add($"http://*:{Port}/");
+                    if (AllowWebSocketProtocol)
+                        ;// _listener.Prefixes.Add($"ws://*:{Port}/");
+                }
 
                 foreach (string binding in Bindings)
                     _listener.Prefixes.Add(binding);
@@ -276,6 +301,9 @@ namespace LogicReinc.WebServer
                         return;
 
                     if (Routing.ExecuteFile(request))
+                        return;
+
+                    if (AllowWebSocketProtocol && Routing.ExecuteWebSocket(request))
                         return;
 
                     //Default Callback
