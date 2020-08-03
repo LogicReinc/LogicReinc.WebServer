@@ -2,8 +2,10 @@
 
 This is a framework for building sites as standalone application or as addition to an existing program.
 
-Note that this is a framework under constant development and things may change.
-
+# Obsolete
+This framework is getting replaced by LogicReinc.Asp, this new framework has the same and more functionality. And is based on Asp.Net Core 3, thus may scale better.
+This framework may only be useful if you need .Net Standard for certain portable projects.
+See new Project: https://github.com/LogicReinc/LogicReinc.Asp
 
 # Features
  - Async Handling (But supports Sync handling and supports multiple ways of async handling)
